@@ -1,0 +1,34 @@
+name: planflow
+description: 跨平台四维计划清单软件（日/周/月/学期），Local-First 本地优先存储，内置 WebDAV 双端自动增量同步。
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  provider: ^6.1.2
+  sqflite: ^2.3.3+1
+  sqflite_common_ffi: ^2.3.3
+  sqlite3_flutter_libs: ^0.5.24
+  path: ^1.9.0
+  path_provider: ^2.1.3
+  uuid: ^4.4.0
+  http: ^1.2.1
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.2.3
+  file_picker: ^8.0.6
+  intl: '>=0.19.0 <0.21.0'
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
