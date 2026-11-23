@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import '../core/constants/app_constants.dart';
 import '../data/models/sync_payload.dart';
 import '../data/models/webdav_config.dart';
@@ -32,7 +33,14 @@ class WebDavTestResult {
 /// 轻量级 RFC 4918 WebDAV 客户端（原生兼容坚果云 / Nextcloud / Alist 等服务）
 class WebDavClient {
   WebDavClient({http.Client? httpClient})
-      : _client = httpClient ?? http.Client();
+      : _client = httpClient ?? _createDefaultClient();
+
+  static http.Client _createDefaultClient() {
+    final ioHttpClient = HttpClient()
+      ..connectionTimeout = AppConstants.httpTimeout
+      ..idleTimeout = const Duration(seconds: 10);
+    return IOClient(ioHttpClient);
+  }
 
   final http.Client _client;
 
@@ -255,10 +263,21 @@ class WebDavClient {
       return '连接超时，请检查网络或 WebDAV 服务器响应';
     }
     if (error is SocketException) {
-      return '无法连接服务器，当前可能处于离线状态';
+      final osErr = error.osError;
+      final osInfo = (osErr != null && osErr.message.isNotEmpty)
+          ? '${osErr.message}, errno=${osErr.errorCode}'
+          : (osErr != null ? 'errno=${osErr.errorCode}' : '');
+      final detail =
+          osInfo.isNotEmpty ? '${error.message} ($osInfo)' : error.message;
+      if (osErr?.errorCode == 1 ||
+          osErr?.errorCode == 13 ||
+          detail.toLowerCase().contains('operation not permitted')) {
+        return '系统拒绝应用联网（$detail），请检查手机「应用权限/联网控制」或 APK 的 INTERNET 权限';
+      }
+      return '无法连接服务器（$detail）';
     }
     if (error is HandshakeException) {
-      return 'HTTPS 证书校验失败，请检查服务器地址';
+      return 'HTTPS 证书校验失败（${error.message}），请检查服务器地址或系统时间';
     }
     if (error is http.ClientException) {
       return '网络请求异常：${error.message}';
