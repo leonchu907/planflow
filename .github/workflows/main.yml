@@ -25,6 +25,7 @@ jobs:
           if [ "$HAD_TEST" -eq 0 ]; then rm -rf test; fi
       - run: flutter pub get
       - run: flutter analyze
+      - run: flutter test
 
   android:
     needs: verify
@@ -41,9 +42,9 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter create --platforms=windows,android .
-      - name: Ensure INTERNET permission for WebDAV sync
+      - name: Configure Android network permissions
         run: |
-          grep -q "android.permission.INTERNET" android/app/src/main/AndroidManifest.xml || sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET" />\n    <application|' android/app/src/main/AndroidManifest.xml
+          python3 -c "import pathlib; q=chr(34); p=pathlib.Path('android/app/src/main/AndroidManifest.xml'); s=p.read_text('utf-8'); perms=f'<uses-permission android:name={q}android.permission.INTERNET{q}/>\n    <uses-permission android:name={q}android.permission.ACCESS_NETWORK_STATE{q}/>\n    '; s=s.replace('<application', perms+'<application', 1) if 'android.permission.INTERNET' not in s else s; s=s.replace('<application', f'<application android:allowBackup={q}false{q} android:usesCleartextTraffic={q}true{q}', 1) if 'android:allowBackup' not in s else s; p.write_text(s, 'utf-8'); print(s)"
       - run: flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
